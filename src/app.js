@@ -1,8 +1,10 @@
-import express, { urlencoded } from "express";
-import cors from "cors";
-import cookieParser from "cookie-parser";
+import express from 'express';
+import { urlencoded } from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 const app = express();
+
 
 app.use(
   cors({
@@ -27,9 +29,14 @@ app.use(express.static("public"));
 
 app.use(cookieParser());
 
+
+
 //setting of the routers
-import healthChecker from "./routes/healthCheck.route.js";
+import healthChecker from "./routes/healthCheck.routes.js";
+import userRouter from "./routes/user.routes.js";
+
 
 app.use("/api/v1/healthCheck", healthChecker);
+app.use("/api/v1/user", userRouter);
 
 export { app };

@@ -25,25 +25,17 @@ const lifestyleEnum = [
 
 const userSchema = new mongoose.Schema(
   {
-    username: {
-      type: String,
-      required: true,
-      unique: true,
-    },
+   
     password: {
       type: String,
-      required: true,
     },
     email: {
       type: String,
-      required: true,
+      require: true,
       unique: true,
     },
-    phone: {
-      type: String,
-      required: true,
-      unique: true,
-    },
+
+   
     name: {
       type: String,
     },
@@ -58,7 +50,7 @@ const userSchema = new mongoose.Schema(
     },
     gender: {
       type: String,
-      required: true,
+
       enum: ["Male", "Female"],
     },
 
@@ -121,7 +113,7 @@ const userSchema = new mongoose.Schema(
 userSchema.pre("save", async function (next) {
   const user = this;
   if (user.isModified("password")) {
-    user.password = await bcrypt.hash(user.password, 10);
+    user.password = bcrypt.hash(user.password, 10);
   }
   next();
 });

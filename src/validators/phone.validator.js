@@ -14,4 +14,4 @@ const validatePhone = (phone) => {
     return phoneSchema.validate(phone);
 };
 
-module.exports = { validatePhone };
+export {validatePhone}
