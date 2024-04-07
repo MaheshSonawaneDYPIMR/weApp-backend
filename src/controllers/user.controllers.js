@@ -1,97 +1,304 @@
 import { ApiError } from "../utils/commanUsed/ApiError.js";
 import { User } from "../models/user.models.js";
-import { asyncHandler } from "../utils/commanUsed/asyncHandler.js";
 import { ApiResponse } from "../utils/commanUsed/ApiResponse.js";
 import jwt from "jsonwebtoken";
-import { google } from "googleapis";
-import config from "../../config/google/config.js";
+import mongoose from "mongoose";
+import { asyncHandler } from "../utils/commanUsed/asyncHandler.js";
 
-const OAuth2 = google.auth.OAuth2;
+const generateAccessAndRefereshTokens = async (userId) => {
+  try {
+    const user = await User.findById(userId);
 
-const oAuth2Client = new OAuth2(
-  config.oauth2Credentials.client_id,
-  config.oauth2Credentials.client_secret,
-  config.oauth2Credentials.redirect_uris[0]
-);
+    console.log("User found:", user); // Log the user object
 
-const googleAuth = asyncHandler(async (req, res) => {
-  console.log("google creddentials:", process.env.CLIENT_ID);
+    const accessToken = await user.generateAccessToken();
+    const refreshToken = await user.generateRefreshToken();
 
-  const authUrl = oAuth2Client.generateAuthUrl({
-    access_type: "offline",
-    scope: [
-      "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/userinfo.profile",
-      
-    ],
+    console.log("Generated Access Token:", accessToken);
+    console.log("Generated Refresh Token:", refreshToken);
+
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    console.log("User after saving refresh token:", user); // Log the user object after saving refresh token
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    console.error("Error in generateAccessAndRefereshTokens:", error);
+    throw new ApiError(
+      500,
+      "Something went wrong while generating refresh and access token"
+    );
+  }
+};
+
+const registerUser = asyncHandler(async (req, res) => {
+  const { email, username, password } = req.body;
+  if ([email, username, password].some((field) => field?.trim() === "")) {
+    throw new ApiError(400, "Please fill all the fields");
+  }
+
+  console.log("Request body", req.body);
+
+  const existedUser = await User.findOne({
+    $or: [{ username }, { email }],
   });
-  res.redirect(authUrl);
+
+  console.log("Existed user", existedUser)  
+  if (existedUser) {
+    throw new ApiError(409, "User already exists");
+  }
+
+  const user = await User.create({
+    email,
+    username: username.toLowerCase(),
+    password,
+  });
+
+  const createdUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+
+  console.log("Created user:", createdUser); // Log the created user object
+
+  if (!createdUser) {
+    throw new ApiError(500, "Something went wrong while registering the user");
+  }
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, createdUser, "User created successfully"));
 });
 
-const googleCallback = asyncHandler(async (req, res) => {
-  if (req.query.error) {
-    // The user did not give us permission.
-    console.log("error did not give oermission", req.query.error);
-    return res.redirect("/");
-  } else {
-    console.log("permission allowed", req.query);
-    oAuth2Client.getToken(req.query.code, function (err, token) {
-      if (err) return res.redirect("/");
+const loginUser = asyncHandler(async (req, res) => {
+  const { email, username, password } = req.body;
+  console.log("Login credentials:", email, username, password);
 
-      // Store the credentials given by google into a jsonwebtoken in a cookie called 'jwt'
-      res.cookie("jwt", jwt.sign(token, config.JWTsecret));
-      return res.redirect("/api/v1/user/auth/get_some_data");
+  if (!username && !email) {
+    throw new ApiError(400, "Username or email is required");
+  }
+
+  const user = await User.findOne({ $or: [{ email }, { username: username }] });
+
+  console.log("Found user:", user); // Log the found user object
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const isPasswordValid = await user.isPasswordcorrect(password);
+
+  console.log("Is password valid:", isPasswordValid); // Log if the password is valid
+
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid user credentials");
+  }
+
+  const tokens = await generateAccessAndRefereshTokens(user._id);
+
+  console.log("Generated tokens:", tokens); // Log the generated tokens
+
+  const accessToken = await tokens.accessToken;
+  const refreshToken = await tokens.refreshToken;
+
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+
+  console.log("Logged in user:", loggedInUser); // Log the logged in user object
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          user: loggedInUser,
+          accessToken,
+          refreshToken,
+        },
+        "User logged in successfully"
+      )
+    );
+});
+
+const logoutUser = asyncHandler(async (req, res) => {
+  console.log("User ID to logout:", req.user._id); // Log the user ID to logout
+
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        refreshToken: undefined,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  console.log("Refresh token cleared for user:", req.user._id); // Log that the refresh token is cleared for the user
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .clearCookie("refreshToken", options)
+    .clearCookie("accessToken", options)
+    .json(new ApiResponse(200, {}, "User logged out successfully"));
+});
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  try {
+    const incomingRefreshToken =
+      req.cookies.refreshToken || req.body.refreshToken;
+
+    console.log("Incoming refresh token:", incomingRefreshToken); // Log the incoming refresh token
+
+    if (!incomingRefreshToken) {
+      throw new ApiError(401, "Unauthorized request");
+    }
+
+    const decodedRefreshToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    console.log("Decoded refresh token:", decodedRefreshToken);
+
+    if (!decodedRefreshToken) {
+      throw new ApiError(401, "Refresh token is expired or invalid");
+    }
+
+    const user = await User.findById(decodedRefreshToken?._id);
+
+    console.log("User found:", user); // Log the found user object
+
+    if (!user) {
+      throw new ApiError(401, "Invalid refresh token");
+    }
+
+    if (incomingRefreshToken !== user?.refreshToken) {
+      throw new ApiError(401, "Refresh token is used or expired");
+    }
+
+    const { accessToken, newRefreshToken } =
+      await generateAccessAndRefereshTokens(user._id);
+
+    console.log("New access token:", accessToken);
+    console.log("New refresh token:", newRefreshToken);
+
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json(
+        new ApiResponse(
+          200,
+          {
+            user: user,
+            accessToken,
+            refreshToken: newRefreshToken,
+          },
+          "Refresh token refreshed successfully"
+        )
+      );
+  } catch (error) {
+    console.error("Error in refreshAccessToken:", error);
+    return res.status(error.statusCode || 500).json({
+      error: error.message || "Invalid refresh token",
     });
   }
 });
 
-const getSomeData = asyncHandler(async (req, res) => {
-  if (!req.cookies.jwt) {
-    // We haven't logged in
-    return res.redirect("/");
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  console.log("Old password:", oldPassword);
+  console.log("New password:", newPassword);
+  console.log("body", req.body);
+
+  const user = await User.findById(req.user?._id);
+  console.log("Found user:", user); // Log the found user object
+
+  const isPasswordCorrect = user.isPasswordcorrect(oldPassword);
+  console.log("Is password correct:", isPasswordCorrect); // Log if the old password is correct
+
+  if (!isPasswordCorrect) {
+    throw new ApiError(401, "Invalid old password");
   }
-  // Create an OAuth2 client object from the credentials in our config file
-  const oauth2Client = new OAuth2(
-    config.oauth2Credentials.client_id,
-    config.oauth2Credentials.client_secret,
-    config.oauth2Credentials.redirect_uris[0]
-  );
-  // Add this specific user's credentials to our OAuth2 client
-  oauth2Client.credentials = jwt.verify(req.cookies.jwt, config.JWTsecret);
-  // Get the youtube service
-  const service = google.oauth2({
-    auth: oauth2Client,
-    version: "v2",
-  });
 
-  const data = await service.userinfo.get();
-  console.log("userdata", data);
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: true });
 
-  const user = await User.findOne({ email: data.data.email });
-  if(!user){
-    const newUser = await User.create({
-      email: data.data.email,
-      name: data.data.name,
-      profilePic: data.data.picture,
-    }) 
-    console.log("new user created", newUser);
-    req.user = newUser;
-    return res.status(200).json(new ApiResponse(201 , newUser , "user created"));
-  }
-  
-  console.log("user found", user);
-  req.user = user;
-  return res.status(200).json(new ApiResponse(200 , user , "user found"));
+  console.log("Password changed successfully");
 
-  
-
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password changed successfully"));
 });
 
-const googleLogOut = asyncHandler(async (req, res) => {
-  res.clearCookie("jwt");
-  return res.redirect("/api/v1/user");
-})
+const getCurrentUser = asyncHandler(async (req, res) => {
+  console.log("Current user:", req.user); // Log the current user object
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        user: req.user,
+      },
+      "User fetched successfully"
+    )
+  );
+});
 
+const updateAccountDetails = asyncHandler(async (req, res) => {
+  const { email } = req.body;
 
+  console.log("Updated details:", { email }); // Log the updated details
 
-export { googleAuth, googleCallback, getSomeData ,googleLogOut};
+  if (!email) {
+    throw new ApiError(400, "Please fill all the fields");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        email,
+      },
+    },
+    {
+      new: true,
+    }
+  ).select("-password");
+
+  console.log("Updated user:", user); // Log the updated user object
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "User updated successfully"));
+});
+
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  changeCurrentPassword,
+  getCurrentUser,
+  updateAccountDetails,
+};

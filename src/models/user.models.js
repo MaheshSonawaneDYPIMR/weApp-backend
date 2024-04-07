@@ -4,14 +4,9 @@ import bcrypt from "bcrypt";
 
 const diseasesEnum = [
   "Type 1 Diabetes",
-  "Rheumatoid Arthritis (RA)",
   "Chronic Kidney Disease (CKD)",
-  "Crohn's Disease and Ulcerative Colitis",
   "Severe Asthma",
-  "Thalassemia",
-  "Cystic Fibrosis (CF)",
-  "Hereditary Angioedema (HAE)",
-  "Hemophilia",
+  "High BP",
   "HIV/AIDS",
 ];
 
@@ -23,9 +18,23 @@ const lifestyleEnum = [
   "Spiritual and Religious Lifestyle",
 ];
 
+const ageEnum = ["18-24", "25-34", "35-44", "45-54", "55-64", "65-74"];
+
+const genderEnum = ["Male", "Female", "Non-Binary"];
+const BMIEnum = [
+  "0 - 18.5(under Weight)",
+  "18.6 - 22.9(Normal)",
+  "23 - 24.9(overWeight Risk)",
+  "25 - 29.9(overWeight)",
+  "30 - above(obese)",
+];
+
+const bloodGroupEnum = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
+const diseasesPeriodEnum = ["0 - 6 months", "6 months - 1 year", "1 - 2 years", "2 - 4 years","5 - above years"]
+
 const userSchema = new mongoose.Schema(
   {
-   
     password: {
       type: String,
     },
@@ -35,9 +44,9 @@ const userSchema = new mongoose.Schema(
       unique: true,
     },
 
-   
-    name: {
+    username: {
       type: String,
+      unique: true,
     },
     profilePic: {
       type: String,
@@ -51,14 +60,12 @@ const userSchema = new mongoose.Schema(
     gender: {
       type: String,
 
-      enum: ["Male", "Female"],
+      enum: genderEnum,
     },
 
-    height: {
-      type: Number,
-    },
-    weight: {
-      type: Number,
+    BMI: {
+      type: String,
+      enum: BMIEnum,
     },
     disease: {
       type: String,
@@ -66,11 +73,12 @@ const userSchema = new mongoose.Schema(
     },
     age: {
       type: Number,
+      enum: ageEnum,
     },
     bloodGroup: {
       type: String,
 
-      enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+      enum: bloodGroupEnum,
     },
     lifeStyle: {
       type: String,
@@ -84,12 +92,15 @@ const userSchema = new mongoose.Schema(
     },
     diseasePeriod: {
       type: Number,
+      enum:diseasesPeriodEnum
     },
     isSmoker: {
-      type: Boolean,
+      type:String,
+      enum: ["Yes", "No"]
     },
     isDrinker: {
-      type: Boolean,
+      type:String,
+      enum: ["Yes", "No"]
     },
     createdAt: {
       type: Date,
@@ -109,16 +120,20 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
 userSchema.pre("save", async function (next) {
-  const user = this;
-  if (user.isModified("password")) {
-    user.password = bcrypt.hash(user.password, 10);
+  if (!this.isModified("password")) {
+    console.log("Password not modified. Skipping hashing.");
+    return next();
   }
+
+  console.log("Hashing password...");
+  this.password = await bcrypt.hash(this.password, 10);
+  console.log("Password hashed successfully.");
+
   next();
 });
 
-userSchema.methods.comparePassword = async function (password) {
+userSchema.methods.isPasswordcorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
@@ -128,7 +143,6 @@ userSchema.methods.generateAccessToken = async function () {
       _id: this._id,
       username: this.username,
       email: this.email,
-      phone: this.phone,
     },
     process.env.ACCESS_TOKEN_SECRET,
     {

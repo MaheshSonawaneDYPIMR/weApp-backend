@@ -1,17 +1,25 @@
 import { Router } from "express";
-import { getSomeData, googleAuth, googleCallback, googleLogOut } from "../controllers/user.controllers.js";
+import {
+  changeCurrentPassword,
+  getCurrentUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  registerUser,
+  updateAccountDetails,
+} from "../controllers/user.controllers.js";
+import { verifyJwt } from "../middlewares/auth.middleware.js";
 
 const router = Router();
-router.route('/').get((req, res) => {
-    res.send('logged out')
-})
-router.route('/auth/google').get(googleAuth)
-router.route('/auth/call_back').get(googleCallback)
-router.route('/auth/get_some_data').get(getSomeData)
-router.route('/auth/logOut').get(googleLogOut)
 
+router.route("/register").post(registerUser);
+router.route("/login").post(loginUser);
 
-
-
+//secure routes
+router.route("/logout").post(verifyJwt, logoutUser);
+router.route("/refreshtoken").post(refreshAccessToken);
+router.route("/change-password").post(verifyJwt, changeCurrentPassword);
+router.route("/current-user").get(verifyJwt, getCurrentUser);
+router.route("/update-account").patch(verifyJwt, updateAccountDetails);
 
 export default router;
