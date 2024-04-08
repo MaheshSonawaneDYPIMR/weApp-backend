@@ -31,40 +31,23 @@ const generateAccessAndRefereshTokens = async (userId) => {
     );
   }
 };
+
 const registerUser = asyncHandler(async (req, res) => {
   const { email, username, password } = req.body;
-console.log("email:", email , "username:",username , "password:",password);
-  // Validate email format
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    throw new ApiError(400, "Invalid email format");
+  console.log("email:", email, "username:", username, "password:", password);
+
+  // Check if email already exists
+  const existingEmail = await User.findOne({ email });
+  if (existingEmail) {
+    throw new ApiError(409, "Email already exists");
   }
 
-  // Validate username format (only lowercase letters, dot (.), underscore (_), and minimum length)
-  const usernameRegex =/^[a-z0-9._]+$/;
-  if (!usernameRegex.test(username)) {
-    throw new ApiError(400, 'Username can only contain lowercase letters, numbers, dot (.), and underscore (_) characters');
+  // Check if username already exists
+  const existingUsername = await User.findOne({ username });
+  if (existingUsername) {
+    throw new ApiError(408, "Username already exists");
   }
 
-  // Validate password length (minimum 6 characters, maximum 17 characters)
-  if (password.length < 6 || password.length > 17) {
-    throw new ApiError(400, "Invalid password length. It should be between 6 and 17 characters");
-  }
-
-  if ([email, username, password].some((field) => field?.trim() === "")) {
-    throw new ApiError(400, "Please fill all the fields");
-  }
-
-  console.log("Request body", req.body);
-
-  const existedUser = await User.findOne({
-    $or: [{ username }, { email }],
-  });
-
-  console.log("Existed user", existedUser)  
-  if (existedUser) {
-    throw new ApiError(409, "User already exists");
-  }
 
   const user = await User.create({
     email,
@@ -72,9 +55,7 @@ console.log("email:", email , "username:",username , "password:",password);
     password,
   });
 
-  const createdUser = await User.findById(user._id).select(
-    "-password -refreshToken"
-  );
+  const createdUser = await User.findById(user._id).select("-password -refreshToken");
 
   console.log("Created user:", createdUser); // Log the created user object
 
@@ -82,9 +63,7 @@ console.log("email:", email , "username:",username , "password:",password);
     throw new ApiError(500, "Something went wrong while registering the user");
   }
 
-  return res
-    .status(201)
-    .json(new ApiResponse(201, createdUser, "User created successfully"));
+  return res.status(201).json(new ApiResponse(201, createdUser, "User created successfully"));
 });
 
 
