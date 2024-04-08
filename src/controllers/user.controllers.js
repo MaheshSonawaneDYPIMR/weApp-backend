@@ -31,7 +31,6 @@ const generateAccessAndRefereshTokens = async (userId) => {
     );
   }
 };
-
 const registerUser = asyncHandler(async (req, res) => {
   const { email, username, password } = req.body;
 
@@ -41,16 +40,15 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid email format");
   }
 
-  // Validate username format (minimum length, alphanumeric characters)
-  const usernameRegex = /^[a-zA-Z0-9]{3,}$/;
+  // Validate username format (only lowercase letters, dot (.), underscore (_), and minimum length)
+  const usernameRegex = /^[a-z._]{3,}$/;
   if (!usernameRegex.test(username)) {
-    throw new ApiError(400, "Invalid username format. It should contain at least 3 alphanumeric characters");
+    throw new ApiError(400, "Invalid username format. It should contain only lowercase letters, dot (.), and underscore (_), and at least 3 characters");
   }
 
-  // Validate password format (minimum length, at least one uppercase letter, one lowercase letter, and one digit)
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
-  if (!passwordRegex.test(password)) {
-    throw new ApiError(400, "Invalid password format. It should be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one digit");
+  // Validate password length (minimum 6 characters, maximum 17 characters)
+  if (password.length < 6 || password.length > 17) {
+    throw new ApiError(400, "Invalid password length. It should be between 6 and 17 characters");
   }
 
   if ([email, username, password].some((field) => field?.trim() === "")) {
@@ -88,6 +86,7 @@ const registerUser = asyncHandler(async (req, res) => {
     .status(201)
     .json(new ApiResponse(201, createdUser, "User created successfully"));
 });
+
 
 
 const loginUser = asyncHandler(async (req, res) => {
