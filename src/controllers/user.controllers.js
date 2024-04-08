@@ -33,7 +33,7 @@ const generateAccessAndRefereshTokens = async (userId) => {
 };
 const registerUser = asyncHandler(async (req, res) => {
   const { email, username, password } = req.body;
-
+console.log("email:", email , "username:",username , "password:",password);
   // Validate email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
@@ -41,9 +41,9 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   // Validate username format (only lowercase letters, dot (.), underscore (_), and minimum length)
-  const usernameRegex = /^[a-z._]{3,}$/;
+  const usernameRegex =/^[a-z0-9._]+$/;
   if (!usernameRegex.test(username)) {
-    throw new ApiError(400, "Invalid username format. It should contain only lowercase letters, dot (.), and underscore (_), and at least 3 characters");
+    throw new ApiError(400, 'Username can only contain lowercase letters, numbers, dot (.), and underscore (_) characters');
   }
 
   // Validate password length (minimum 6 characters, maximum 17 characters)
