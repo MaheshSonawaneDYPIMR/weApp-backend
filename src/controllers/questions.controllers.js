@@ -35,7 +35,11 @@ const createQuestion = asyncHandler(async (req, res) => {
 const submitQuestionOption = asyncHandler(async (req, res) => {
   console.log("Starting submitQuestionOption function...");
 
-  const { option, userDBKey } = req.body; // Changed to userDBKey
+  let { option, userDBKey } = req.body;
+  if (userDBKey === 'age' || userDBKey === 'diseasePeriod') {
+    option = parseInt(option); // Use parseInt for converting string to integer
+}
+  // Changed to userDBKey
 
   if (!option || !userDBKey) { // Changed to userDBKey
     console.log("Missing option or userDBKey in request body.");
@@ -82,7 +86,7 @@ const submitQuestionOption = asyncHandler(async (req, res) => {
       );
   } catch (error) {
     console.log("Error caught:", error);
-    return res.status(500).json(new ApiError(500, "Internal server error"));
+    return res.status(500).json(new ApiError(500, "Internal server error" ));
   }
 });
 

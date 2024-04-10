@@ -18,20 +18,20 @@ const lifestyleEnum = [
   "Spiritual and Religious Lifestyle",
 ];
 
-const ageEnum = ["18-24", "25-34", "35-44", "45-54", "55-64", "65-74"];
+const ageEnum = [14, 21, 32, 48, 55, 68];
 
 const genderEnum = ["Male", "Female", "Non-Binary"];
 const BMIEnum = [
-  "0 - 18.5(under Weight)",
-  "18.6 - 22.9(Normal)",
-  "23 - 24.9(overWeight Risk)",
-  "25 - 29.9(overWeight)",
-  "30 - above(obese)",
+  "under Weight",
+  "Normal",
+  "overWeight Risk",
+  "overWeight",
+  "obese",
 ];
 
 const bloodGroupEnum = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
-const diseasesPeriodEnum = ["0 - 6 months", "6 months - 1 year", "1 - 2 years", "2 - 4 years","5 - above years"]
+const diseasesPeriodEnum = [6, 12, 24, 48,72]
 
 const userSchema = new mongoose.Schema(
   {
