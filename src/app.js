@@ -2,9 +2,11 @@ import express from 'express';
 import { urlencoded } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import session from 'express-session';
 
 const app = express();
+
+
+
 
 
 app.use(
@@ -26,12 +28,7 @@ app.use(
     limit: "16kb",
   })
 );
-app.use(session({
-  secret: 'asjfhskjdncxvknikdjh',
-  resave: true,
-  saveUninitialized: true,
-  cookie: { maxAge: 86400000 } // Set session expiration to 24 hours (in milliseconds)
-}));
+
 app.use(express.static("public"));
 
 app.use(cookieParser());

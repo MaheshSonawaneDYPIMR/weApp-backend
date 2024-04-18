@@ -4,6 +4,9 @@ import { ApiResponse } from "../utils/commanUsed/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import { asyncHandler } from "../utils/commanUsed/asyncHandler.js";
+import {redisClient} from "../utils/commanUsed/redis.js"
+
+
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -251,17 +254,40 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
-  console.log("Current user:", req.user); // Log the current user object
+  let userData;
+  let isCached = false;
+  try {
+    const userDataFromRedis = await redisClient.get('userData');
+    if (userDataFromRedis) {
+      console.log("User data from Redis:", userDataFromRedis);
+      isCached = true;
+      userData = JSON.parse(userDataFromRedis);
+    } else {
+      console.log("User data from request:", req.user);
+      userData = req.user;
+      await redisClient.setex('userData', 3600, JSON.stringify(userData)); // Corrected setex method and added JSON.stringify
+    }
+
+    console.log("User data:", userData);
+
+  } catch (error) {
+    console.error("Error fetching user data:", error);
+    return res.status(500).json(
+      new ApiResponse(500, null, "Error fetching user data")
+    );
+  }
+
   return res.status(200).json(
     new ApiResponse(
       200,
       {
-        user: req.user,
+        user: userData,
       },
-      "User fetched successfully"
+      `User fetched successfully ${isCached ? '(cached)' : '(not cached)'}`
     )
   );
 });
+
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
   const { email } = req.body;
