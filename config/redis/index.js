@@ -1,18 +1,22 @@
-
 import { Redis } from "ioredis";
-
-
 
 let redisClient;
 
 (async () => {
-  console.log("I am here",process.env,process.env.REDIS_PORT,process.env.REDIS_PASSWORD);
+  console.log(
+    "I am here",
+    process.env,
+    process.env.REDIS_PORT,
+    process.env.REDIS_PASSWORD
+  );
 
   redisClient = new Redis({
-     host: `192.168.1.104`,
-     port:`6379`,
-     password:`14377774449992`,
-     db:`0`,
+    host: `192.168.1.104`,
+    port: `6379`,
+    password: `14377774449992`,
+
+    lazyConnect: true,
+    keepAlive: 1000,
   });
 
   redisClient.on("error", (error) => console.error(`Error: ${error.message}`));
@@ -28,7 +32,4 @@ let redisClient;
   }
 })();
 
-
-
-export {redisClient}
-
+export { redisClient };
