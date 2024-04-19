@@ -1,13 +1,14 @@
-import express from 'express';
-import { urlencoded } from 'express';
-import cors from 'cors';
-import cookieParser from 'cookie-parser';
+import dotenv from "dotenv";
+dotenv.config({
+  path: "./.env",
+});
+
+import express from "express";
+import { urlencoded } from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
 
 const app = express();
-
-
-
-
 
 app.use(
   cors({
@@ -33,15 +34,13 @@ app.use(express.static("public"));
 
 app.use(cookieParser());
 
-
-
 //setting of the routers
 import healthChecker from "./routes/healthCheck.routes.js";
 import userRouter from "./routes/user.routes.js";
-import questionsRouter from "./routes/questions.routes.js"
+import questionsRouter from "./routes/questions.routes.js";
 
 app.use("/api/v1/healthCheck", healthChecker);
 app.use("/api/v1/user", userRouter);
-app.use("/api/v1/question",questionsRouter)
+app.use("/api/v1/question", questionsRouter);
 
 export { app };

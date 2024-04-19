@@ -1,12 +1,10 @@
-import { ApiError } from "../utils/commanUsed/ApiError.js";
+import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.models.js";
-import { ApiResponse } from "../utils/commanUsed/ApiResponse.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
-import { asyncHandler } from "../utils/commanUsed/asyncHandler.js";
-import {redisClient} from "../utils/commanUsed/redis.js"
-
-
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { redisClient } from "../../config/redis/index.js";
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
