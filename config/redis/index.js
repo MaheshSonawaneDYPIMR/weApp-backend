@@ -16,7 +16,7 @@ let redisClient;
     password: `14377774449992`,
 
     lazyConnect: true,
-    keepAlive: 1000,
+    keepAlive: 10000,
   });
 
   redisClient.on("error", (error) => console.error(`Error: ${error.message}`));
