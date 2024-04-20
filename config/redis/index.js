@@ -9,8 +9,10 @@ let redisClient;
     process.env.REDIS_PORT,
     process.env.REDIS_PASSWORD
   );
-
+if(!redisClient){
   redisClient = new Redis("redis://red-cohm85tjm4es739ba6u0:6379");
+}
+  
 
   redisClient.on("error", (error) => console.error(`Error: ${error.message}`));
 
