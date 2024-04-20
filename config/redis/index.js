@@ -10,14 +10,7 @@ let redisClient;
     process.env.REDIS_PASSWORD
   );
 
-  redisClient = new Redis({
-    host: `192.168.1.104`,
-    port: `6379`,
-    password: `14377774449992`,
-
-    lazyConnect: true,
-    keepAlive: 10000,
-  });
+  redisClient = new Redis("redis://red-cohm85tjm4es739ba6u0:6379");
 
   redisClient.on("error", (error) => console.error(`Error: ${error.message}`));
 
