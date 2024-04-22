@@ -10,7 +10,7 @@ let redisClient;
     process.env.REDIS_PASSWORD
   );
 if(!redisClient){
-  redisClient = new Redis("redis://red-cohm85tjm4es739ba6u0:6379");
+  redisClient = new Redis("rediss://red-cohtjjgl5elc73cu1m5g:iNmcXbzNfmFgNFqhFOycV8Jkz803XlFZ@oregon-redis.render.com:6379");
 }
   
 
