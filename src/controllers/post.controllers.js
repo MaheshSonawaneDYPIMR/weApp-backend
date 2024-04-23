@@ -7,8 +7,8 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Post } from "../models/post.models.js";
 
 const publishPost = asyncHandler(async (req, res) => {
-  const { postMsg,postPic } = req.body;
-  const postPicFileLocalPath = JSON.stringify(postPic); ;
+  const { postMsg } = req.body;
+  const postPicFileLocalPath = req.file.path ;
   let postPicture = null;
   let postMessage = null;
  console.log("local path hhhhh",postPicFileLocalPath);
