@@ -8,7 +8,7 @@ import { Post } from "../models/post.models.js";
 
 const publishPost = asyncHandler(async (req, res) => {
   const { postMsg,postPic } = req.body;
-  const postPicFileLocalPath = postPic ;
+  const postPicFileLocalPath = JSON.stringify(postPic); ;
   let postPicture = null;
   let postMessage = null;
  console.log("local path hhhhh",postPicFileLocalPath);
