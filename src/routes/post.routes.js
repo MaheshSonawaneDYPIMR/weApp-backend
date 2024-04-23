@@ -9,6 +9,6 @@ router.use(verifyJwt);
 
 //routes regarding post
 
-router.route("/").post(upload.fields([{name:"postPic",maxCount:1}]), publishPost);
+router.route("/").post(upload.single('postPic'), publishPost);
 
 export default router;
