@@ -6,29 +6,46 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Post } from "../models/post.models.js";
 
-const publishPost = asyncHandler(async(req,res)=>{
-    const {postMsg,tags} = req.body;
-    console.log("message is here ",postMsg);
-    console.log(req.files)
-    
-    const postPicFileLocalPath = req.files?.videoFile[0];
-    console.log("post local path",postPicFileLocalPath)
-
-    if(!postPicFileLocalPath && !postMsg){
-        throw new ApiError(404,"Not Found nothing to post")
-    }
-
-    const postPicData = await uploadOnCloudinary(postPicFileLocalPath)
-    console.log("post pic data",postPicData)
-
-    if(!postPicData){
-        throw new ApiError(404,"error uploading on clodinary")
-    }
-
-    const post = await Post.create({
-        postPic:postPicData.url,
-        postMsg:postMsg,
-        tags:tags
-    })
-
-})
+const publishPost = asyncHandler(async (req, res) => {
+   
+      const { postMsg } = req.body;
+      const postPicFileLocalPath = req.files?.postPic[0].path;
+      let postPicture = null;
+      let postMessage = null;
+  
+      console.log("Received request body:", req.body);
+      console.log("Received files:", req.files);
+  
+      if (!postPicFileLocalPath && !postMsg) {
+        throw new ApiError(404, "Not Found nothing to post");
+      }
+  
+      if (!(postPicFileLocalPath == undefined)) {
+        try {
+            const postPicData = await uploadOnCloudinary(postPicFileLocalPath);
+            postPicture = postPicData.url;
+            console.log("Post pic data:", postPicData.url);
+        } catch (error) {
+            console.log("Error uploading postpic:", error);
+        }
+      
+      }
+      if (postMsg) {
+        postMessage = postMsg;
+      }
+  
+  
+      const post = await Post.create({
+        postPic: postPicture,
+        postMsg: postMessage,
+      });
+  
+      console.log("Post created:", post);
+      return res
+        .status(200)
+        .json(new ApiResponse(200, "Post published successfully", post));
+   
+  });
+  
+  export { publishPost };
+  

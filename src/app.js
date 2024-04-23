@@ -38,9 +38,11 @@ app.use(cookieParser());
 import healthChecker from "./routes/healthCheck.routes.js";
 import userRouter from "./routes/user.routes.js";
 import questionsRouter from "./routes/questions.routes.js";
+import postRouter from "./routes/post.routes.js"
 
 app.use("/api/v1/healthCheck", healthChecker);
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/question", questionsRouter);
+app.use("/api/v1/post", postRouter);
 
 export { app };
