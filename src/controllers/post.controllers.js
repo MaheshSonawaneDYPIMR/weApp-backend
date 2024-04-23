@@ -17,7 +17,7 @@ const publishPost = asyncHandler(async (req, res) => {
       console.log("Received files:", req.files);
   
       if (!postPicFileLocalPath && !postMsg) {
-        throw new ApiError(404, "Not Found nothing to post");
+        throw new ApiError(400, "Not Found nothing to post");
       }
   
       if (!(postPicFileLocalPath == undefined)) {
