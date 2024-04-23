@@ -3,12 +3,7 @@ import { Redis } from "ioredis";
 let redisClient;
 
 (async () => {
-  console.log(
-    "I am here",
-    process.env,
-    process.env.REDIS_PORT,
-    process.env.REDIS_PASSWORD
-  );
+
 if(!redisClient){
   redisClient = new Redis("rediss://red-cohtjjgl5elc73cu1m5g:iNmcXbzNfmFgNFqhFOycV8Jkz803XlFZ@oregon-redis.render.com:6379");
 }
