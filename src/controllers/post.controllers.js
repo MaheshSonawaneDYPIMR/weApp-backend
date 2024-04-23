@@ -11,7 +11,6 @@ const publishPost = asyncHandler(async (req, res) => {
   const postPicFileLocalPath = req.file.path ;
   let postPicture = null;
   let postMessage = null;
- console.log("local path hhhhh",postPicFileLocalPath);
   if (!postPicFileLocalPath && !postMsg) {
     throw new ApiError(404, "Nothing to post");
   }
@@ -20,9 +19,7 @@ const publishPost = asyncHandler(async (req, res) => {
     try {
       const postPicData = await uploadOnCloudinary(postPicFileLocalPath);
       postPicture = postPicData.url;
-      console.log("Post pic data:", postPicData.url);
     } catch (error) {
-      console.log("Error uploading postpic:", error);
       throw new ApiError(500, "Error uploading post picture");
     }
   }
@@ -36,7 +33,6 @@ const publishPost = asyncHandler(async (req, res) => {
     postMsg: postMessage,
   });
 
-  console.log("Post created:", post);
   return res.status(200).json(new ApiResponse(200, "Post published successfully", post));
 });
 

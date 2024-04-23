@@ -10,18 +10,13 @@ const generateAccessAndRefereshTokens = async (userId) => {
   try {
     const user = await User.findById(userId);
 
-    console.log("User found:", user); // Log the user object
 
     const accessToken = await user.generateAccessToken();
     const refreshToken = await user.generateRefreshToken();
 
-    console.log("Generated Access Token:", accessToken);
-    console.log("Generated Refresh Token:", refreshToken);
 
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
-
-    console.log("User after saving refresh token:", user); // Log the user object after saving refresh token
 
     return { accessToken, refreshToken };
   } catch (error) {
@@ -35,7 +30,6 @@ const generateAccessAndRefereshTokens = async (userId) => {
 
 const registerUser = asyncHandler(async (req, res) => {
   const { email, username, password } = req.body;
-  console.log("email:", email, "username:", username, "password:", password);
 
   // Check if email already exists
   const existingEmail = await User.findOne({ email });
@@ -58,8 +52,6 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const createdUser = await User.findById(user._id).select("-password -refreshToken");
 
-  console.log("Created user:", createdUser); // Log the created user object
-
   if (!createdUser) {
     throw new ApiError(500, "Something went wrong while registering the user");
   }
@@ -71,7 +63,6 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const loginUser = asyncHandler(async (req, res) => {
   const { email, username, password } = req.body;
-  console.log("Login credentials:", email, username, password);
 
   if (!username && !email) {
     throw new ApiError(400, "Username or email is required");
@@ -79,15 +70,11 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({ $or: [{ email }, { username: username }] });
 
-  console.log("Found user:", user); // Log the found user object
-
   if (!user) {
     throw new ApiError(404, "User not found");
   }
 
   const isPasswordValid = await user.isPasswordcorrect(password);
-
-  console.log("Is password valid:", isPasswordValid); // Log if the password is valid
 
   if (!isPasswordValid) {
     throw new ApiError(401, "Invalid user credentials");
@@ -95,16 +82,12 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const tokens = await generateAccessAndRefereshTokens(user._id);
 
-  console.log("Generated tokens:", tokens); // Log the generated tokens
-
   const accessToken = await tokens.accessToken;
   const refreshToken = await tokens.refreshToken;
 
   const loggedInUser = await User.findById(user._id).select(
     "-password -refreshToken"
   );
-
-  console.log("Logged in user:", loggedInUser); // Log the logged in user object
 
   const options = {
     httpOnly: true,
@@ -129,7 +112,6 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
-  console.log("User ID to logout:", req.user._id); // Log the user ID to logout
 
   await User.findByIdAndUpdate(
     req.user._id,
@@ -143,7 +125,6 @@ const logoutUser = asyncHandler(async (req, res) => {
     }
   );
 
-  console.log("Refresh token cleared for user:", req.user._id); // Log that the refresh token is cleared for the user
 
   const options = {
     httpOnly: true,
@@ -162,8 +143,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     const incomingRefreshToken =
       req.cookies.refreshToken || req.body.refreshToken;
 
-    console.log("Incoming refresh token:", incomingRefreshToken); // Log the incoming refresh token
-
+ 
     if (!incomingRefreshToken) {
       throw new ApiError(401, "Unauthorized request");
     }
@@ -173,15 +153,11 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       process.env.REFRESH_TOKEN_SECRET
     );
 
-    console.log("Decoded refresh token:", decodedRefreshToken);
-
     if (!decodedRefreshToken) {
       throw new ApiError(401, "Refresh token is expired or invalid");
     }
 
     const user = await User.findById(decodedRefreshToken?._id);
-
-    console.log("User found:", user); // Log the found user object
 
     if (!user) {
       throw new ApiError(401, "Invalid refresh token");
@@ -193,9 +169,6 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
     const { accessToken, newRefreshToken } =
       await generateAccessAndRefereshTokens(user._id);
-
-    console.log("New access token:", accessToken);
-    console.log("New refresh token:", newRefreshToken);
 
     const options = {
       httpOnly: true,
@@ -227,15 +200,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
-  console.log("Old password:", oldPassword);
-  console.log("New password:", newPassword);
-  console.log("body", req.body);
 
   const user = await User.findById(req.user?._id);
-  console.log("Found user:", user); // Log the found user object
-
+ 
   const isPasswordCorrect = user.isPasswordcorrect(oldPassword);
-  console.log("Is password correct:", isPasswordCorrect); // Log if the old password is correct
 
   if (!isPasswordCorrect) {
     throw new ApiError(401, "Invalid old password");
@@ -243,8 +211,6 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 
   user.password = newPassword;
   await user.save({ validateBeforeSave: true });
-
-  console.log("Password changed successfully");
 
   return res
     .status(200)
@@ -257,16 +223,16 @@ const getCurrentUser = asyncHandler(async (req, res) => {
   try {
     const userDataFromRedis = await redisClient.get('userData');
     if (userDataFromRedis) {
-      console.log("User data from Redis:", userDataFromRedis);
+ 
       isCached = true;
       userData = JSON.parse(userDataFromRedis);
     } else {
-      console.log("User data from request:", req.user);
+
       userData = req.user;
       await redisClient.setex('userData', 3600, JSON.stringify(userData)); // Corrected setex method and added JSON.stringify
     }
 
-    console.log("User data:", userData);
+
 
   } catch (error) {
     console.error("Error fetching user data:", error);
@@ -289,8 +255,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
   const { email } = req.body;
-
-  console.log("Updated details:", { email }); // Log the updated details
+// Log the updated details
 
   if (!email) {
     throw new ApiError(400, "Please fill all the fields");
@@ -308,7 +273,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     }
   ).select("-password");
 
-  console.log("Updated user:", user); // Log the updated user object
+ // Log the updated user object
 
   return res
     .status(200)

@@ -33,7 +33,6 @@ const createQuestion = asyncHandler(async (req, res) => {
 
 //for user
 const submitQuestionOption = asyncHandler(async (req, res) => {
-  console.log("Starting submitQuestionOption function...");
 
   let { option, userDBKey } = req.body;
   if (userDBKey === 'age' || userDBKey === 'diseasePeriod') {
@@ -42,39 +41,30 @@ const submitQuestionOption = asyncHandler(async (req, res) => {
   // Changed to userDBKey
 
   if (!option || !userDBKey) { // Changed to userDBKey
-    console.log("Missing option or userDBKey in request body.");
     return res
       .status(400)
       .json(new ApiError(400, "Please provide all the required fields"));
   }
 
   const user = req.user;
-  console.log("USER: " + user);
 
   if (!user) {
-    console.log("User not authenticated.");
     return res
       .status(401)
       .json(new ApiError(401, "Please login to submit an option"));
   }
 
   try {
-    console.log("Finding user data...");
     const userData = await User.findById(user._id);
 
     if (!userData) {
-      console.log("User data not found.");
       return res.status(404).json(new ApiError(404, "User not found"));
     }
 
-    console.log("Updating userData...");
-
-    console.log("User data", userData);
     // Assuming userDBKey is a new field, set it directly
     userData[userDBKey] = option; // Changed to userDBKey
     await userData.save();
 
-    console.log("UserData updated successfully.");
     return res
       .status(200)
       .json(
@@ -85,7 +75,7 @@ const submitQuestionOption = asyncHandler(async (req, res) => {
         )
       );
   } catch (error) {
-    console.log("Error caught:", error);
+  
     return res.status(500).json(new ApiError(500, "Internal server error" ));
   }
 });
@@ -95,13 +85,12 @@ const submitQuestionOption = asyncHandler(async (req, res) => {
 //for Admin  
 const deleteQuestion = asyncHandler(async (req, res) => {
 
-    console.log("body", req.body);
 const {id }= req.body || req.params 
 
-console.log("id: " + id);
+
 
   if (!id) {
-    console.log("i am here")
+
     return res
       .status(400)
       .json(new ApiError(400, "Please provide a valid question ID"));
