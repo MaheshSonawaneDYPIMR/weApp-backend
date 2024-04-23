@@ -8,21 +8,19 @@ import { Post } from "../models/post.models.js";
 
 const publishPost = asyncHandler(async (req, res) => {
    
-      const { postMsg } = req.body;
-      const postPicFileLocalPath = req.files?.postPic[0].path;
-      let postPicture = null;
-      let postMessage = null;
-  
+      const { postMsg,postPic } = req.body;
+     // const postPicFileLocalPath = req.files?.postPic[0].path;
+      let postPicture;
       console.log("Received request body:", req.body);
       console.log("Received files:", req.files);
   
-      if (!postPicFileLocalPath && !postMsg) {
+      if (!postPic && !postMsg) {
         throw new ApiError(400, "Not Found nothing to post");
       }
   
-      if (!(postPicFileLocalPath == undefined)) {
+      if (!(postPic == "")) {
         try {
-            const postPicData = await uploadOnCloudinary(postPicFileLocalPath);
+            const postPicData = await uploadOnCloudinary(postPic);
             postPicture = postPicData.url;
             console.log("Post pic data:", postPicData.url);
         } catch (error) {
@@ -30,14 +28,12 @@ const publishPost = asyncHandler(async (req, res) => {
         }
       
       }
-      if (postMsg) {
-        postMessage = postMsg;
-      }
+     
   
   
       const post = await Post.create({
         postPic: postPicture,
-        postMsg: postMessage,
+        postMsg: postMsg,
       });
   
       console.log("Post created:", post);
