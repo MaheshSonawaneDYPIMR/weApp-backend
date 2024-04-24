@@ -9,16 +9,16 @@ import { Post } from "../models/post.models.js";
 const publishPost = asyncHandler(async (req, res) => {
   const { postMsg } = req.body;
   console.log(req.file)
-  const postPicFileLocalPath = req.file.path ;
+
   let postPicture = null;
   let postMessage = null;
   if (!postPicFileLocalPath && !postMsg) {
     throw new ApiError(404, "Nothing to post");
   }
 
-  if (postPicFileLocalPath) {
+  if (!(req.file === undefined)) {
     try {
-      const postPicData = await uploadOnCloudinary(postPicFileLocalPath);
+      const postPicData = await uploadOnCloudinary(req.file.path);
       postPicture = postPicData.url;
     } catch (error) {
       throw new ApiError(500, "Error uploading post picture");
