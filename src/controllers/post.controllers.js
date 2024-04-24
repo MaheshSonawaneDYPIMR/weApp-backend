@@ -12,7 +12,7 @@ const publishPost = asyncHandler(async (req, res) => {
 
   let postPicture = null;
   let postMessage = null;
-  if (!postPicFileLocalPath && !postMsg) {
+  if ((req.file === undefined) && !postMsg) {
     throw new ApiError(404, "Nothing to post");
   }
 
