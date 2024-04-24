@@ -32,6 +32,7 @@ const publishPost = asyncHandler(async (req, res) => {
   const post = await Post.create({
     postPic: postPicture,
     postMsg: postMessage,
+    owner:req.user?._id
   });
 
   return res.status(200).json(new ApiResponse(200, "Post published successfully", post));

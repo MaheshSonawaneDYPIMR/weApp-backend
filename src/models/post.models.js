@@ -1,21 +1,20 @@
-import mongoose  from "mongoose";
+import mongoose from "mongoose";
 
-const postSchema = new mongoose.Schema({
-  postPic:
-    {
-      type:String
-    }
-  ,
-  postMsg:{
-    type:String,
-    
+const postSchema = new mongoose.Schema(
+  {
+    postPic: {
+      type: String,
+    },
+    postMsg: {
+      type: String,
+    },
+
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
- 
- created_by:{
-   type:mongoose.Schema.Types.ObjectId,
-   ref:"User"
- }
+  { timestamps: true }
+);
 
-},{timestamps:true})
-
-export const Post = mongoose.model('Post',postSchema)
+export const Post = mongoose.model("Post", postSchema);
